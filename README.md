@@ -8,7 +8,7 @@ Roots and Design
 
 LESSTHAN or LT is a programming language that draws on concepts from several other programming languages, most noteably FALSE (http://strlen.com/false/), FORTH, and LISP and various derivatives thereof. The name derives from the '<' operator which plays a significant role. LT uses a FORTHish postfix notation and a push/pop stack, FALSEish single-char (obfuscated!) operators and variables, and LISPish lists (called sequences in LT) and functional programming concepts. Implementation of an interpreter is a work-in-progress and one day I hope to write a compiler!
 
-###Functional programming principles
+### Functional programming principles
 
 LT attempts to provide functional programming capability within the context of a stack-based model, where a stack could also be stream. In this regard I have attempted to define the language adhering to the following principles:
 
@@ -25,7 +25,7 @@ LT attempts to provide functional programming capability within the context of a
 - Tail recursion: Recursion is optimised to an iteration if the last operation of a function is a recursive call. 
 
 
-###Data types 
+### Data types 
 
 All data is created and manipulated on a data stack. The logical data types described below are all converted to/from a 64 bit double format which is an overlay onto Douglas Crockford's D64 numeric data type. 
 
@@ -46,7 +46,7 @@ The logical data types are:
 |bfn |A fun that returns a bvl
 
 
-###Language syntax
+### Language syntax
 
 As with FALSE and FORTH, there is very little syntax at all: code is a stream of operators, digits, variables, and comments that are evaluated in sequence. Different to FORTH, operators and variables are single char and are generally not separated, so `[$%+/]` is a function consisting of four operators while `[1 1+]` is a function consisting of two integers and an operator.  
 
@@ -58,11 +58,11 @@ Operators that expect a truth value will regard zero as false and any other valu
 
 The 'quit' operator Q expects a value on the stack and performs an appropriate system call to terminate the current process witht the supplied value as exit code, ie. anything other than 0Q will terminate with an error. Any sub-processes started by the current process will continue unaffected.
 
-###Global variables
+### Global variables
 
 The 26 lower case letters 'a' to 'z' are available as dword global variable memory slots. Using the var name in code will push its address onto the stack. A var can be bound to a value at any time by eg. `a:` and the current value retrieved by eg. `a;`.  Upper case letters are seq operators.
 
-###Conditional operators
+### Conditional operators
 
 Only two conditional operators are defined, 'ifelse' and 'while'. 
 [TRY TO GET AWAY FROM CONDITIONALS - USE RECURSION INSTEAD]
@@ -73,7 +73,7 @@ The 'while' operator `#` expects a bfn and a fun on the stack. If the bfn return
 
 A 'case' construct can be formed using nested 'ifelse' statements and duplicating the case value for each 'ifelse' operator eg. `<casevalue> %3=["Three"][%2=["Two"][1=["One"]["Other"]?]?]?`. The need for an 'until' construct can normally be avoided.
 
-###Lambda Functions
+### Lambda Functions
 
 A fun definition `[..]` may contain a sequence of zero or more printable ascii characters that should be valid LT operators, digits or variables. The fun definition may also be used to define strings. Definition of a fun pushes its address onto the stack.
 
@@ -81,7 +81,7 @@ A fun may contain embedded funs eg. `[%.[10+]!10-]`. During definition of the ou
 
 The 'eval' operator `!` expects the adr of a fun on the stack, and evaluates the contained sequence of chars, returning input to the keyboard when complete eg. `[10%*]!` computes ten times itself.
 
-###Bound/named functions and recursion
+### Bound/named functions and recursion
 
 Lambda functions may be bound to a variable name with eg. `[%*]f:` and then evaluated by first getting the value of the variable (the fun adr) and calling the 'eval' operator eg. `f;!`. A var can be used in a fun and its binding is not accessed until the fun is evaluated. This allows recursive calls to named functions.The ubiquitous factorial function in LT: `[%0=[\1][%1-f;!*]?]f:` 
 
@@ -94,7 +94,7 @@ Which can be evaluated as follows:
 4f;! -> 24
 ... 
 ```
-###Console i/o
+### Console i/o
 
 LT provides simple i/o operators to accept input and emit output. The 'accept' operator `^` accepts a key from the current input device (default is the keyboard) and pushes its ascii code onto the stack. The 'emitchar' operator `,` expects an ascii code on the stack and emits it as an ascii char to the current output device (default is the console). The 'emitnumber' operator `.` expects a number on the stack, converts it to a stream of ascii chars in a standard format (printf style formatting is available .....) and emits these to the current output device. The 'emitstring' operator `"` expects a fun on the stack and emits its contents as a stream of ascii chars to the current output device.
 [LOOK INTO IO MONAD THINKING TO REFINE THIS TOPIC]
@@ -111,7 +111,7 @@ Sequences
 
 Sequences in LT are somewhat similar to lists in LISP although they follow the postfix notation, operating in reverse order they seem more like stacks than lists. (The name 'sequence' or 'seq' is borrowed from CLOJURE.)
 
-###Defining sequences
+### Defining sequences
 
 A seq definition `( .. )` may contain zero or more int, flt, fun or seq items delimited by wsp. Consecutive delimiters or a final delimiter will be treated as one delimiter and wsp may include Line Feed chars eg. `(  1  <LF>  2  )` is equivalent to `( 1 2 )`. Entering a seq definition stores its contents as described below and pushes its address onto the stack. 
 
@@ -119,13 +119,13 @@ During definition each item is wrapped in brackets `[..]` and stored as a delaye
 
 Seqs may share state if, for example, an operator returns a part of the original seq, the result may not re-create the items but return a pointer to existing items. This is explained in more detail below.
 
-###Accessing sequence items
+### Accessing sequence items
 
 When a specific item in a seq is accessed by one of the seq operators, its fun representation, as described above, is pushed onto the stack and the evaluator function ! is called which will push the 'value' of the item onto the stack. An item's value may be the adr of a fun or seq or an int or flt value. 
 
 For example, given the seq `( [Hello World!] [%.] 100 ( 1 2 ) )` , accessing the `[[Hello World!]]` item will construct the fun `[Hello World!]` (which is usefull only as a string) and push its adr on the stack, accessing the `[[%.]]` item will construct the fun `[%.]` and push its adr on the stack, accessing the `[100]` item will evaluate the digits 100 and push the signed int 100 onto the stack, and accessing the `[( 1 2 )]` item will construct the seq `( 1 2 )` and push its adr on the stack.
 
-###Interrogating sequences
+### Interrogating sequences
 
 The 'length' operator L expects a seq on the stack and returns the number of items in the seq. It does not evaluate items. Items are numbered starting from one at the 'top' of the seq ie. `( n .. 1 )` , and from minus one from the 'bottom' of the seq ie. ( -1 .. -n ) . Referencing outside of this range will throw an untrapped error!
 
@@ -136,13 +136,13 @@ Get and set ith item:            ` 3 1[$]( 5 4 2 )G ` will change the first item
 
 The 'findwith' operator F expects a search value, a bfn and a seq on the stack. It iterates through each item in the seq, pushing the search value and the value of the current item onto the stack and evaluating the bfn. The first time the bfn evaluates to true the iteration stops and the index number of the current item is pushed onto the stack. The bfn should consume the search value and the current item value and return a truth value. eg. `30[=]( 30 20 10 )F` will return 3.
 
-###Iterating over sequences
+### Iterating over sequences
 
 The 'rest,top' operator `<` expects a seq on the stack. It first pushes the adr of the rest of the seq onto the stack, then the value of the top item, eg. `( 30 20 10 )<`  will return `( 30 20 ),10` on the stack. 
 
 Evaluating `<` on the last item in a seq will push an adr of nul/zero and the value of the last item eg. `(1)<` will push `0,1`. Evaluating `<` on an empty seq will push an adr of minus one and a value of nul/zero, eg. `()<` will push `-1,0`. Therefore the adr can be tested separately for last-item or empty-seq conditions.
 
-###Constructing and destructing sequences
+### Constructing and destructing sequences
 
 The 'cons' operator `C` expects a value and a seq on the stack and logically pushes the value onto the top of the target seq and returns the adr of a new seq. The cons operation creates a new item and links its 'rest' field to the 'top' of the target seq and thus the new and target seq share structure, eg. if a seq is stored in a var with `( 3 2 )a:` the following code `1a;C` followed by `0a;C` will evaluate to `( 3 2 1 )` and `( 3 2 0 )` and all three seqs will share the `( 3 2 )` part, diagramatically:
 
@@ -174,23 +174,23 @@ The 'split' operator S expects an index value and a seq on the stack and logical
     +---------- <- adr of 'after' part 
 ```
 
-###Processing sequences
+### Processing sequences
 
 The 'applyto' operator `A` expects a fun and a seq on the stack. It iterates through each item in the seq, pushing its value onto the stack and evaluating the fun. No assumptions are made about the result or the state of the stack, ie. the fun may perform calculations, consume the value, or leave results on the stack for use during the next iteration or after all iterations are completed.
 
 The 'mapwith' operator `M` expects a fun and a seq on the stack. It iterates through each item in the seq, pushing its value onto the stack and evaluating the fun, and then 'cons'ing the value on the stack to a results seq. At each iteration the fun should leave a meaningful result on the stack for the cons. After the last iteration the adr of the results seq is left on the stack.
 
-###Sorting sequences
+### Sorting sequences
 
 The 'orderwith' operator `O` expects a bfn and a seq on the stack. It defines a new seq with items sorted according to the bfn, which should evaluate to true if the next item is greater than the top item and false otherwise, eg. `[>]( 2 1 3 )O` will evaluate to `( 3 2 1 )`. All items are evaluated in order to determine their numerical valuefor the sort algorithm. Items that are funs or seqs will evaluate to a memory address, which may or may not be useful. [A DEEPER SORTING ALGORITHM MAY BE DESIGNED LATER]
 
 The order of a seq may be reversed by passing a fun that always evaluates to false, eg. `[0]( 2 1 3 )O` will evaluate to `( 3 1 2 )`. A fun that always evaluates to true will define a new seq in the same order.
 
-###Comparing sequences
+### Comparing sequences
 
 LT provides set theory type operators to compare the items in two seqs. The 'intersect' operator `I` defines a new seq consisting of items common to both seqs. The 'union' operator `U` defines a new seq consisting of items in both seqs including those in both only once. The 'difference' operator `D` defines a new seq consisting of items in only one of the seqs, ie. not intersect.
 
-###Pairs and sequences
+### Pairs and sequences
 
 The 'bindwith' operator `B` expects a fun and two seqs on the stack. It iterates through corresponding items in each seq, pushing thier values onto the stack and evaluating the fun, and then 'cons'ing the value on the stack to a results seq. At each iteration the fun should leave a meaningful result on the stack for the cons. After the last iteration the adr of the results seq is left on the stack.
 
@@ -198,7 +198,7 @@ The 'zipwith' operator `Z` expects a fun and two seqs on the stack and converts 
 
 The 'unzipwith' operator `Y` expects a fun and a seq on the stack and converts the seq of pairs to a pair of seqs. It iterates through pairs of values in the seq, pushing their values onto the stack and evaluating the fun, and then 'cons'ing two values on the stack one to each of two results seqs. At each iteration the fun should leave two meaningful results on the stack for the cons. After the last iteration the adrs of the two results seqs are left on the stack, eg. `[]( 9 3 4 2 1 1 )Y` will evaluate to `( 9 4 1 )( 3 2 1 )`.
 
-###Using `<` to construct S-Expressions
+### Using `<` to construct S-Expressions
 
 The `<` operator evaluates the top item in the seq after pushing the adr of the 'rest' of the seq. This provides the opportunity to build S-Expressions in a (reversed) LISP fasion eg. `( 3 2 1 [[.]$A] )f:` creates a function with embedded parameters and stores it to variable f and the code `f;<!` will emit the ints `1 2 3`. This happens as follows: 
 
@@ -217,7 +217,7 @@ Procs and concurrency
 
 LT provides a small suite of process operators allowing concurrent processing and inter-process communication. 
 
-###Starting and stopping processes
+### Starting and stopping processes
 
 The 'procwithfun' operator `P` expects a fun on the stack. It starts a new process and passes it the fun, which the new process will evaluate, and leaves the new process id and the syscall error code on the stack, eg. `[11[1-%0>][%.]#0Q]P` will launch a new process that will print the digits 10 to 1 and quit normally, and returns the process id and a syscall error code. The fun is passed as a stream of ascii chars, ie. it is not evaluated by the originating process.
 
@@ -225,7 +225,7 @@ The 'procwithfile' operator `N` expects a fun on the stack containing the full p
 
 The 'killproc' operator `K` expects a value and a process id on the stack. It requests the process to terminate with the value as exit code, and returns the syscall error code.
 
-###Inter-process communication
+### Inter-process communication
 
 Interprocess communication is based on a simple echo protocol where the sender sends a message and waits for a response and the receiver waits for a message and sends its pid to acknowledge receipt. Messages are passed as strings in the form of a fun. The sender must decide what to do with the echoed response, and the receiver must decide what to do with the received message. 
 
@@ -336,7 +336,7 @@ Alternative: use ` for pick, then different axioms:
 Memory model
 ------------
 
-###Funs in memory
+### Funs in memory
 
 Funs are created in a revolving cache area. The cache default size of 2048 bytes can be altered by a command line option. Once the cache is full, new funs are created starting again at the beginning of the cache overwriting anything that was there.  If a new fun will not fit in the remaining area of cache its storage is restarted from the beginning of the cache. An attempt to create a fun bigger than the cache will cause an untrapped error!
 
@@ -368,7 +368,7 @@ hex:      63 68 61 72 6C 69 73 74 00
          addr                 terminator  
 ```
 
-##Seqs in memory
+### Seqs in memory
 
 Seqs are created in a revolving seq stack area. The seq stack default size of 512 dwords can be altered by a command line option. Once the seq stack is full adding additional items continues from the beginning of the seq stack area overwriting anything that was there, ie. a seq definition can wrap from the end to the beginning of the seq stack area. 
 
@@ -392,7 +392,7 @@ Current value:|fghixxxxxxxxxxxx0yyyyyy ~~ yyyyyyyyyyyyyyyyyyyyyyy0abcde|
 
 ```
 
-###Optimising memory useage
+### Optimising memory useage
 
 LT does not provide garbage collection although using a revolving fun cache and a revolving seq stack eliminates the possibility of over/under flow errors or out-of-memory conditions (at the expense of potentially overwriting required data). It is up to the programmer to optimise the size of the fun cache and seq stack (and the parameter stack) for the particular application. To assist, the interpreter can track and provide useage data. If the interpreter is passed the -u command line option and then terminates gracefully with the 'quit' operator, it will print the following stats to stdout:
 
